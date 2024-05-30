@@ -12,7 +12,7 @@ int main() {
     double matrixA[row][columnA];
     double matrixB[row][columnB];
 
-    for (int i = 0; i < row; i++) {
+    for (int i = 0; i < row; i++) { //Initializes the matrix
         cout << "Enter the x coordinate for #" << i + 1 << endl;
         cin >> matrixA[i][0];
         matrixA[i][1] = 1;
@@ -35,8 +35,9 @@ int main() {
     int column1 = transColumn;
     int column2 = columnA;
 
+    
+    double multTransA_and_A[row1][column2] = {}; //Ensures that the elements are 0
     //multiplying the transpose of A with matrix A
-    double multTransA_and_A[row1][column2] = {};
     for (int i = 0; i < row1; i++) {
         for (int j = 0; j < column2; j++) {
             for (int k = 0; k < column1; k++) {
@@ -45,14 +46,14 @@ int main() {
         }
     }
     // multiplying the transpose of A with matrix B
-    double multTransA_and_B[row1][1] = {};
+    double multTransA_and_B[row1][1] = {}; //Ensures that the elements are 0
     for (int i = 0; i < row1; i++) {
         for (int j = 0; j < column1; j++) {
             multTransA_and_B[i][0] += transMatrixA[i][j] * matrixB[j][0];
         }
     }
     // combining the two matricies to prepare for Gaussian elimination
-    double matrixC[row1][column2 + 1] = {};
+    double matrixC[row1][column2 + 1] = {}; //Ensures the elements are 0
     for (int i = 0; i < row1; i++) {
         for (int j = 0; j < column2; j++) {
             matrixC[i][j] = multTransA_and_A[i][j];
