@@ -1,107 +1,80 @@
 #include <iostream>
-#include <iomanip> 
-using namespace std;
+#include <iomanip>
+#include <chrono>
+#include <vector>
+#include <cmath>
+
+// Function declarations
+void getInputData(int& row, std::vector<std::vector<double>>& matrixA, std::vector<std::vector<double>>& matrixB);
+std::vector<std::vector<double>> transposeMatrix(const std::vector<std::vector<double>>& matrix);
+std::vector<std::vector<double>> multiplyMatrices(const std::vector<std::vector<double>>& matrix1, const std::vector<std::vector<double>>& matrix2);
+void gaussianElimination(std::vector<std::vector<double>>& matrix);
+std::vector<double> backwardSubstitution(const std::vector<std::vector<double>>& matrix);
+void printLineOfBestFit(double slope, double intercept);
 
 int main() {
-    int columnA = 2; 
-    int columnB = 1; 
+    auto start = std::chrono::high_resolution_clock::now();
+
     int row;
-    cout << "How many points will you be plotting." << endl;
-    cin >> row;
+    std::vector<std::vector<double>> matrixA, matrixB;
 
-    double matrixA[row][columnA];
-    double matrixB[row][columnB];
+    getInputData(row, matrixA, matrixB);
 
-    for (int i = 0; i < row; i++) { //Initializes the matrix
-        cout << "Enter the x coordinate for #" << i + 1 << endl;
-        cin >> matrixA[i][0];
-        matrixA[i][1] = 1;
-        cout << "Enter the y coordinate for #" << i + 1 << endl;
-        cin >> matrixB[i][0];
-    }
+    std::vector<std::vector<double>> transMatrixA = transposeMatrix(matrixA);
+    std::vector<std::vector<double>> multTransA_and_A = multiplyMatrices(transMatrixA, matrixA);
+    std::vector<std::vector<double>> multTransA_and_B = multiplyMatrices(transMatrixA, matrixB);
 
-    int transRow = columnA;
-    int transColumn = row;
-    double transMatrixA[transRow][transColumn];
-
-    //Calculates for the transpose of matrix A
-    for (int i = 0; i < transRow; i++) {
-        for (int j = 0; j < transColumn; j++) {
-            transMatrixA[i][j] = matrixA[j][i];
-        }
-    }
-
-    int row1 = transRow;
-    int column1 = transColumn;
-    int column2 = columnA;
-
-    
-    double multTransA_and_A[row1][column2] = {}; //Ensures that the elements are 0
-    //multiplying the transpose of A with matrix A
-    for (int i = 0; i < row1; i++) {
-        for (int j = 0; j < column2; j++) {
-            for (int k = 0; k < column1; k++) {
-                multTransA_and_A[i][j] += transMatrixA[i][k] * matrixA[k][j];
-            }
-        }
-    }
-    // multiplying the transpose of A with matrix B
-    double multTransA_and_B[row1][1] = {}; //Ensures that the elements are 0
-    for (int i = 0; i < row1; i++) {
-        for (int j = 0; j < column1; j++) {
-            multTransA_and_B[i][0] += transMatrixA[i][j] * matrixB[j][0];
-        }
-    }
-    // combining the two matricies to prepare for Gaussian elimination
-    double matrixC[row1][column2 + 1] = {}; //Ensures the elements are 0
-    for (int i = 0; i < row1; i++) {
-        for (int j = 0; j < column2; j++) {
+    // Combine matrices to prepare for Gaussian elimination
+    std::vector<std::vector<double>> matrixC(multTransA_and_A.size(), std::vector<double>(multTransA_and_A[0].size() + 1, 0));
+    for (size_t i = 0; i < multTransA_and_A.size(); ++i) {
+        for (size_t j = 0; j < multTransA_and_A[0].size(); ++j) {
             matrixC[i][j] = multTransA_and_A[i][j];
         }
-        matrixC[i][column2] = multTransA_and_B[i][0];
+        matrixC[i].back() = multTransA_and_B[i][0];
     }
 
-    // Perform Gaussian elimination with partial pivoting
-    for (int k = 0; k < row1; k++) {
-        // Find the row with the maximum element in the current column
-        double maxVal = abs(matrixC[k][k]);
-        int maxRow = k;
-        for (int m = k + 1; m < row1; m++) {
-            if (abs(matrixC[m][k]) > maxVal) { 
-                maxVal = abs(matrixC[m][k]);
-                maxRow = m;
-            }
-        }
+    gaussianElimination(matrixC);
+    std::vector<double> coefficients = backwardSubstitution(matrixC);
 
-        // Swap the maximum row with the current row
-        for (int n = k; n < column2 + 1; n++) {
-            double tmp = matrixC[maxRow][n];
-            matrixC[maxRow][n] = matrixC[k][n];
-            matrixC[k][n] = tmp;
-        }
+    double slope = coefficients[0];
+    double intercept = coefficients[1];
 
-        // Make all rows below this one 0 in current column
-        for (int m = k + 1; m < row1; m++) {
-            double factor = matrixC[m][k] / matrixC[k][k];
-            for (int n = k; n < column2 + 1; n++) {
-                matrixC[m][n] -= factor * matrixC[k][n];
-            }
-        }
-    }
+    printLineOfBestFit(slope, intercept);
 
-    // Backward substitution
-    for (int i = row1 - 1; i >= 0; i--) {
-        for (int j = i + 1; j < column2; j++) {
-            matrixC[i][column2] -= matrixC[i][j] * matrixC[j][column2];
-        }
-        matrixC[i][column2] /= matrixC[i][i];
-    }
-    // creating the line of best fit
-    double x = matrixC[0][column2];
-    double b = matrixC[1][column2];
-
-    cout << fixed << setprecision(4); // Set precision for better readability
-    cout << "The line of best fit for the data points provided is : y = " << x << "x + " << b << endl;
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> duration = end - start;
+    std::cout << "New code execution time: " << duration.count() << " seconds." << std::endl;
 
     return 0;
 }
+
+// Function to get input data
+void getInputData(int& row, std::vector<std::vector<double>>& matrixA, std::vector<std::vector<double>>& matrixB) {
+    std::cout << "How many points will you be plotting." << std::endl;
+    std::cin >> row;
+
+    matrixA.resize(row, std::vector<double>(2));
+    matrixB.resize(row, std::vector<double>(1));
+
+    for (int i = 0; i < row; ++i) {
+        std::cout << "Enter the x coordinate for #" << i + 1 << std::endl;
+        std::cin >> matrixA[i][0];
+        matrixA[i][1] = 1;
+        std::cout << "Enter the y coordinate for #" << i + 1 << std::endl;
+        std::cin >> matrixB[i][0];
+    }
+}
+
+// Function to transpose a matrix
+std::vector<std::vector<double>> transposeMatrix(const std::vector<std::vector<double>>& matrix) {
+    std::vector<std::vector<double>> transMatrix(matrix[0].size(), std::vector<double>(matrix.size()));
+    for (size_t i = 0; i < matrix.size(); ++i) {
+        for (size_t j = 0; j < matrix[0].size(); ++j) {
+            transMatrix[j][i] = matrix[i][j];
+        }
+    }
+    return transMatrix;
+}
+
+// Function to multiply two matrices
+std::vector<std::vector<double>> multiplyMatrices(const std::vector<std::vector<double
