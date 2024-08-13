@@ -77,4 +77,65 @@ std::vector<std::vector<double>> transposeMatrix(const std::vector<std::vector<d
 }
 
 // Function to multiply two matrices
-std::vector<std::vector<double>> multiplyMatrices(const std::vector<std::vector<double
+std::vector<std::vector<double>> multiplyMatrices(const std::vector<std::vector<double>>& matrix1, const std::vector<std::vector<double>>& matrix2) {
+    std::vector<std::vector<double>> result(matrix1.size(), std::vector<double>(matrix2[0].size(), 0));
+    for (size_t i = 0; i < matrix1.size(); ++i) {
+        for (size_t j = 0; j < matrix2[0].size(); ++j) {
+            for (size_t k = 0; k < matrix1[0].size(); ++k) {
+                result[i][j] += matrix1[i][k] * matrix2[k][j];
+            }
+        }
+    }
+    return result;
+}
+
+// Function to perform Gaussian elimination with partial pivoting
+void gaussianElimination(std::vector<std::vector<double>>& matrix) {
+    size_t rowCount = matrix.size();
+    size_t colCount = matrix[0].size();
+
+    for (size_t k = 0; k < rowCount; ++k) {
+        // Find the row with the maximum element in the current column
+        double maxVal = std::abs(matrix[k][k]);
+        size_t maxRow = k;
+        for (size_t m = k + 1; m < rowCount; ++m) {
+            if (std::abs(matrix[m][k]) > maxVal) {
+                maxVal = std::abs(matrix[m][k]);
+                maxRow = m;
+            }
+        }
+
+        // Swap the maximum row with the current row
+        std::swap(matrix[maxRow], matrix[k]);
+
+        // Make all rows below this one 0 in current column
+        for (size_t m = k + 1; m < rowCount; ++m) {
+            double factor = matrix[m][k] / matrix[k][k];
+            for (size_t n = k; n < colCount; ++n) {
+                matrix[m][n] -= factor * matrix[k][n];
+            }
+        }
+    }
+}
+
+// Function to perform backward substitution
+std::vector<double> backwardSubstitution(const std::vector<std::vector<double>>& matrix) {
+    size_t rowCount = matrix.size();
+    size_t colCount = matrix[0].size();
+    std::vector<double> result(rowCount);
+
+    for (int i = rowCount - 1; i >= 0; --i) {
+        result[i] = matrix[i][colCount - 1];
+        for (size_t j = i + 1; j < rowCount; ++j) {
+            result[i] -= matrix[i][j] * result[j];
+        }
+        result[i] /= matrix[i][i];
+    }
+    return result;
+}
+
+// Function to print the line of best fit
+void printLineOfBestFit(double slope, double intercept) {
+    std::cout << std::fixed << std::setprecision(4); // Set precision for better readability
+    std::cout << "The line of best fit for the data points provided is: y = " << slope << "x + " << intercept << std::endl;
+}
